@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<head>
+    <meta charset="UTF-8">
+	<title>Chat Room Lite</title>
+	<script src="./js/jquery.min.js"></script>
+	<script src="./js/showdown.min.js"></script>
+	<link class="defDefaultCss" rel="stylesheet">
+	<link class="defHighlightCss" rel="stylesheet">
+	<link class="setDefaultCss" rel="stylesheet">
+	<link class="setHighlightCss" rel="stylesheet">
+	<script>
+		var TT = localStorage.getItem('themeT');
+		if(TT!=undefined){
+			$(".setDefaultCss").attr("href",`./themes/${TT}/main.css`);
+			$(".setHighlightCss").attr("href",`./themes/${TT}/highlight.css`);
+		}
+		$('.defDefaultCss').attr('href','./themes/DefaultDark/main.css');
+		$('.defHighlightCss').attr('href','./themes/DefaultDark/highlight.css');
+	</script>
+	<link rel="stylesheet" href="./css/katex.min.css">
+	<link rel="stylesheet" href="./css/Client.css">
+	<link rel="stylesheet" href="./css/all.min.css">
+</head>
+<body>
+    <div class="interface">
+		<div class="ChatRoom Block">
+			<div class="Title">Chat Room</div>
+			<pre class="Output"></pre>
+		</div>
+		<div class="Status Block">
+			<div class="Title">Status</div>
+			<pre class="Output"><span class="style_error"><i class="fa fa-exclamation-circle" style="width:20px"></i>Please enter a chat room</span></pre>
+		</div>
+		<div class="UserInfo Block">
+			<div class="Title">User Info.</div>
+			<pre class="Output"></pre>
+		</div>
+		<div class="InputArea Block">
+			<div class="Title">Input Area</div>
+			<textarea class="Input" id="Input" placeholder="Your Comment Here." style="resize:none"></textarea>
+			<div class="Preview" style="display:none"></div>
+			<span class="InputType"><i class="fas fa-terminal" id="InputT" onclick="changeInputType();" style="width:20px;cursor:pointer;"></i> <span id="InputTypeChooser">Single Line Mode</span></span>
+			<span class="PreviewType"><span class="PreviewEdit chosenEditType" style="cursor:pointer;"><i class="fas fa-edit" style="width:20px"></i> Write</span> | <span class="PreviewWatch" style="cursor:pointer;"><i class="fas fa-sticky-note-o" style="width:20px"></i> Preview</span> | <span class="SendMessage style_accept" style="cursor:pointer;"><i class="fas fa-send-o" style="width:20px"></i> Send (Enter)</span></span>
+		</div>
+	</div>
+	<div style="position:absolute;top:637px;left:14px;text-align:left;white-space:nowrap;"><span class="ToolList"><span onclick="Send('/cls')" style="cursor:pointer;"><i class="fas fa-eraser" style="width:20px"></i></span> <span onclick="FastSetTag();" style="cursor:pointer;"><i class="fas fa-tags" style="width:20px"></i></span> <span onclick="FastSetAdmin();" style="cursor:pointer;"><i class="fas fa-user-secret" style="width:20px"></i></span> <span onclick="FastSetBan();" style="cursor:pointer;"><i class="fas fa-ban" style="width:20px"></i></span></span></div>
+	<div style="position:absolute;width:500px;top:635px;left:390px;text-align:right;"><span class="ThemeList"></span></div>
+	<div class="AllWindow" style="display:none;text-align:center">
+		<div class="WindowBuild Closer"></div>
+		<div class="AlertWindow" style="position:absolute;top:50%;left:50%;transform:translate(-50%, -50%);z-index:2;" onclick=";"><div class="WindowInfo" style="width:500px;"></div>
+			<span class="ConfirmInfo style_accept" style="width:50%;cursor:pointer">
+				<i class="fas fa-check" style="width:20px"></i>Accept</span>
+			<span class="style_error Closer" style="width:50%;cursor:pointer;">
+				<i class="fas fa-times" style="width:20px;"></i>Cancel</span>
+			</span>
+		</div>
+	</div>
+</body>
+<footer>
+	<script src="./js/Client.js"></script>
+	<script>
+		$('.Closer').click(CloseWindow);
+		$(".PreviewEdit").click(function(){
+			changeEditType('Edit');
+		});
+		$(".PreviewWatch").click(function(){
+			changeEditType('Preview');
+		});
+		$(".SendMessage").click(function(){
+			Send($('.Input').val(),true);
+			input.val("");
+		});
+		var ThemeL = ["DefaultLight", "DefaultDark"];
+		var ThemeI = ["fas fa-sun-o", "fas fa-moon-o"];
+		var ThemeS = "Theme List | ";
+		for(var p=0;p<ThemeL.length;p++)
+			ThemeS+=`<i class="${ThemeI[p]}" style="cursor:pointer;width:20px;" onclick="setTheme('${ThemeL[p]}')"></i>`;
+		$(".ThemeList").html(ThemeS);
+		var input=$('.Input'),Doc=$(document);
+		var MultiplySelection=false;
+		function changeInputType(){
+			MultiplySelection=!MultiplySelection;
+			document.getElementById("InputT").className=(MultiplySelection?"fas fa-align-left":"fas fa-terminal");
+			document.getElementById("InputTypeChooser").innerHTML=MultiplySelection?
+			"Multiple Line Mode":
+			"Single Line Mode";
+			$('.SendMessage').html(`<i class="fas fa-send-o" style="width:20px"></i> Send (${MultiplySelection?"CTRL+Enter":"Enter"})</span>`);
+		}
+		var onTextareaKeydown = function(K){
+			K = K || event;
+			if (K.keyCode == 9) {
+	        	K.preventDefault();
+	        	var start = this.selectionStart,
+	        		end = this.selectionEnd;
+	        	var text = this.value;
+	        	var tab = "	";
+	        	text = text.substr(0, start) + tab + text.substr(start);
+	        	this.value = text;
+	        	this.selectionStart = start + tab.length;
+	        	this.selectionEnd = end + tab.length;
+	        }
+	        if(K.ctrlKey&&K.shiftKey&&K.keyCode==65){
+				changeInputType();
+				return false;
+	        }
+			if(MultiplySelection&&event.ctrlKey&&(K.keyCode==13 || K.keyCode==10)){
+				if(input.val()!=""){
+					Send(input.val(),true);
+					input.val("");
+				}
+				return false;
+			}
+			if(!MultiplySelection&&!event.ctrlKey&&(K.keyCode==13 || K.keyCode==10)){
+				if(input.val()!=""){
+					Send(input.val(),true);
+					input.val("");
+				}
+				return false;
+			}
+		}
+		document.getElementById("Input").onkeydown = onTextareaKeydown;
+	</script>
+</footer>
+</html>

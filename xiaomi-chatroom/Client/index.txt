@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<head>
+    <meta charset="UTF-8">
+	<title>xiaomai聊天室</title>
+	<script src="./js/jquery.min.js"></script>
+	<script src="./js/showdown.min.js"></script>
+	<script src="./js/jscookie.min.js"></script>
+	<link class="defDefaultCss" rel="stylesheet">
+	<link class="defHighlightCss" rel="stylesheet">
+	<link class="setDefaultCss" rel="stylesheet">
+	<link class="setHighlightCss" rel="stylesheet">
+	<script>
+		var TT = localStorage.getItem('themeT');
+		if(TT!=undefined){
+			$(".setDefaultCss").attr("href",`./themes/${TT}/main.css`);
+			$(".setHighlightCss").attr("href",`./themes/${TT}/highlight.css`);
+		}
+		$('.defDefaultCss').attr('href','./themes/DefaultDark/main.css');
+		$('.defHighlightCss').attr('href','./themes/DefaultDark/highlight.css');
+	</script>
+	<link rel="stylesheet" href="./css/katex.min.css">
+	<link rel="stylesheet" href="./css/Client.css">
+	<link rel="stylesheet" href="./css/all.min.css">
+</head>
+<body>
+    <div class="interface">
+		<div class="ChatRoom Block">
+			<div class="Title">聊天界面</div>
+			<pre class="Output"></pre>
+		</div>
+		<div class="Status Block">
+			<div class="Title">状态</div>
+			<pre class="Output"><span class="style_error"><i class="fa fa-exclamation-circle" style="width:20px"></i>请进入聊天室</span></pre>
+		</div>
+		<div class="UserInfo Block">
+			<div class="Title">用户信息.</div>
+			<pre class="Output"></pre>
+		</div>
+		<div class="InputArea Block">
+			<div class="Title">输入区</div>
+			<textarea class="Input" id="Input" placeholder="在这里输入..." style="resize:none"></textarea>
+		</div>
+		<span class="InputType"><i class="fas fa-terminal" id="InputT" onclick="changeInputType();" style="width:20px;cursor:pointer;"></i> <span id="InputTypeChooser">请输入聊天室单线模式-输入以发送消息</span></span>
+	</div>
+	<div style="position:absolute;width:500px;top:613px;left:390px;text-align:right;"><span class="主题列表"></span></div>
+</body>
+<footer>
+	<script src="./js/Client.js"></script>
+	<script>
+		var ThemeL = ["DefaultLight", "DefaultDark"];
+		var ThemeI = ["fas fa-sun-o", "fas fa-moon-o"];
+		var ThemeS = "Theme List | ";
+		for(var p=0;p<ThemeL.length;p++)
+			ThemeS+=`<i class="${ThemeI[p]}" style="cursor:pointer;width:20px;" onclick="setTheme('${ThemeL[p]}')"></i>`;
+		$(".ThemeList").html(ThemeS);
+		var input=$('.Input'),Doc=$(document);
+		var MultiplySelection=false;
+		var onTextareaKeydown = function(K){
+			if (K.keyCode == 9) {
+	        	K.preventDefault();
+	        	var start = this.selectionStart,
+	        		end = this.selectionEnd;
+	        	var text = this.value;
+	        	var tab = "	";
+	        	text = text.substr(0, start) + tab + text.substr(start);
+	        	this.value = text;
+	        	this.selectionStart = start + tab.length;
+	        	this.selectionEnd = end + tab.length;
+	        }
+			if(MultiplySelection&&event.ctrlKey&&(K.keyCode==13 || K.keyCode==10)){
+				if(input.val()!=""){
+					Send(input.val());
+					input.val("");
+				}
+				return false;
+			}
+			if(!MultiplySelection&&!event.ctrlKey&&(K.keyCode==13 || K.keyCode==10)){
+				if(input.val()!=""){
+					Send(input.val());
+					input.val("");
+				}
+				return false;
+			}
+		}
+		document.getElementById("Input").onkeydown = onTextareaKeydown;
+		Doc.on('keypress',K=>{
+			if(K.ctrlKey===true&&K.shiftKey===true&&K.keyCode===1)
+				changeInputType();
+		});
+		function changeInputType(){
+			MultiplySelection=!MultiplySelection;
+			document.getElementById("InputT").className=(MultiplySelection?"fas fa-align-left":"fas fa-terminal");
+			document.getElementById("InputTypeChooser").innerHTML=MultiplySelection?
+			"多行模式-按CTRL+Enter发送消息":
+			"单行模式-按Enter以发送消息";
+		}
+	</script>
+</footer>
+</html>
